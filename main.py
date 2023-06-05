@@ -7,7 +7,6 @@ from tensorflow.keras import layers
 from keras import backend as K
 from sklearn.metrics import r2_score
 from Read_Data import Processed_Data
-from PlotLearning import PlotLearning
 import pickle
 
 print(pd.__version__)
