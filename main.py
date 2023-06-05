@@ -81,7 +81,6 @@ def build_and_compile_model(norm):
 dnn_model = build_and_compile_model(normalizer)
 dnn_model.summary()
 
-callbacks_list = [PlotLearning()]
 
 history = dnn_model.fit(
     train_features,
