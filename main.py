@@ -66,11 +66,6 @@ def custom_accuracy(y_true, y_pred):
     return ( 1 - SS_res/(SS_tot + K.epsilon()) )
 
 
-# class CustomAccuracy(MeanMetricWrapper):
-
-#     def __init__(self, **kwargs):
-#         super(CustomAccuracy, self).__init__(custom_accuracy, **kwargs)
-
 
 def build_and_compile_model(norm, act_func):
   model = keras.Sequential([
@@ -86,9 +81,9 @@ def build_and_compile_model(norm, act_func):
 
 for act_func in ['tanh', 'relu']:
     
-    # print("\nTrying with save_format='{}':\n".format(save_format))
     save_format = 'tf'
     
+    print(f"Using - {act_func}")
     model_with_function = build_and_compile_model(normalizer, act_func)
     model_with_function.compile(loss='mean_absolute_error',
                 optimizer=tf.keras.optimizers.Adam(0.001),
@@ -116,5 +111,4 @@ for act_func in ['tanh', 'relu']:
         print(new_model.metrics[0], new_model.metrics[1])
     except Exception as e:
         print("model_with_function not loaded with the following error:")
-        # print(type(e))
         print(e)
