@@ -8,6 +8,7 @@ from keras import backend as K
 from sklearn.metrics import r2_score
 from Read_Data import Processed_Data
 import pickle
+from tensorflow.python.keras.metrics import MeanMetricWrapper
 
 print(pd.__version__)
 
@@ -59,40 +60,61 @@ with np.printoptions(precision=2, suppress=True):
   print('Normalized:', normalizer(first).numpy())
 
 
-def coeff_determination(y_true, y_pred):
+def custom_accuracy(y_true, y_pred):
     SS_res =  K.sum(K.square( y_true-y_pred )) 
     SS_tot = K.sum(K.square( y_true - K.mean(y_true) ) ) 
     return ( 1 - SS_res/(SS_tot + K.epsilon()) )
 
-def build_and_compile_model(norm):
+
+# class CustomAccuracy(MeanMetricWrapper):
+
+#     def __init__(self, **kwargs):
+#         super(CustomAccuracy, self).__init__(custom_accuracy, **kwargs)
+
+
+def build_and_compile_model(norm, act_func):
   model = keras.Sequential([
       norm,
-      layers.Dense(64, activation='tanh'),
-      layers.Dense(64, activation='tanh'),
+      layers.Dense(64, activation=act_func),
+      layers.Dense(64, activation=act_func),
       layers.Dense(1)
   ])
 
-  model.compile(loss='mean_absolute_error',
-                optimizer=tf.keras.optimizers.Adam(0.001),
-               metrics=[coeff_determination])
   return model
 
 
-dnn_model = build_and_compile_model(normalizer)
-dnn_model.summary()
 
-
-history = dnn_model.fit(
+for act_func in ['tanh', 'relu']:
+    
+    # print("\nTrying with save_format='{}':\n".format(save_format))
+    save_format = 'tf'
+    
+    model_with_function = build_and_compile_model(normalizer, act_func)
+    model_with_function.compile(loss='mean_absolute_error',
+                optimizer=tf.keras.optimizers.Adam(0.001),
+               metrics=[custom_accuracy])
+    
+    history = model_with_function.fit(
     train_features,
     train_labels,
-    epochs=50,
+    epochs=40,
     validation_data=(val_features, val_labels),
     verbose=1,
     batch_size=500)
 
-test_predictions = dnn_model.predict(test_features).flatten()
-print(r2_score(test_labels, test_predictions))
+    test_predictions = model_with_function.predict(test_features).flatten()
+    print(r2_score(test_labels, test_predictions))
 
-filename = 'current_score_prediction_model.sav'
-pickle.dump(dnn_model, open(filename, 'wb'))
-print("Model Saved")
+    model_with_function.save(f'./model_with_function_{act_func}' + '.' + save_format, 
+                             save_format=save_format)
+    
+    try:
+        new_model = tf.keras.models.load_model(f'model_with_function_{act_func}' + '.' + save_format, 
+                                               custom_objects={'custom_accuracy': custom_accuracy}, 
+                                               compile=True)
+        print("model_with_function loaded with the following metrics:")
+        print(new_model.metrics[0], new_model.metrics[1])
+    except Exception as e:
+        print("model_with_function not loaded with the following error:")
+        # print(type(e))
+        print(e)
