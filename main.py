@@ -7,7 +7,6 @@ from tensorflow.keras import layers
 from keras import backend as K
 from sklearn.metrics import r2_score
 from Read_Data import Processed_Data
-import pickle
 from tensorflow.python.keras.metrics import MeanMetricWrapper
 
 print(pd.__version__)
@@ -15,7 +14,7 @@ print(pd.__version__)
 np.random.seed(1234)
 tf.random.set_seed(1234)
 
-files = ['ipl','sat', 'ntb', 'psl', 'bbl']
+files = ['ipl','sat', 'ntb', 'psl', 'bbl', 't20is']
 
 li = []
 for f in files:
@@ -32,9 +31,9 @@ total_matches = len(df1['match_id'].unique())
 print(total_matches)
 
 
-train_features = df1[df1['match_id'].isin(df1['match_id'].unique()[400:total_matches])][['wickets_left', 'balls_left','current_score']]
-val_features = df1[df1['match_id'].isin(df1['match_id'].unique()[200:400])][['wickets_left', 'balls_left', 'current_score']]
-test_features=df1[df1['match_id'].isin(df1['match_id'].unique()[:200])][[ 'wickets_left', 'balls_left','current_score']]
+train_features = df1[df1['match_id'].isin(df1['match_id'].unique()[400:total_matches])][['wickets_left', 'balls_left','current_score', 'runs_scored_from']]
+val_features = df1[df1['match_id'].isin(df1['match_id'].unique()[200:400])][['wickets_left', 'balls_left', 'current_score', 'runs_scored_from']]
+test_features=df1[df1['match_id'].isin(df1['match_id'].unique()[:200])][[ 'wickets_left', 'balls_left','current_score', 'runs_scored_from']]
 
 # train_y = df1[df1['match_id'].isin(df1['match_id'].unique()[:-200])][['Final_Score']]
 # test_y = df1[df1['match_id'].isin(df1['match_id'].unique()[-200:])][['Final_Score']]
@@ -46,9 +45,9 @@ print("test_features", test_features.shape)
 # print("test_y", test_y.shape)
 
 
-train_labels = train_features.pop('current_score')
-val_labels = val_features.pop('current_score')
-test_labels = test_features.pop('current_score')
+train_labels = train_features.pop('runs_scored_from')
+val_labels = val_features.pop('runs_scored_from')
+test_labels = test_features.pop('runs_scored_from')
 
 normalizer = tf.keras.layers.Normalization(axis=-1)
 normalizer.adapt(np.array(train_features))
@@ -100,11 +99,11 @@ for act_func in ['tanh', 'relu']:
     test_predictions = model_with_function.predict(test_features).flatten()
     print(r2_score(test_labels, test_predictions))
 
-    model_with_function.save(f'./model_with_function_{act_func}' + '.' + save_format, 
+    model_with_function.save(f'./final_score_model_with_function_{act_func}' + '.' + save_format, 
                              save_format=save_format)
     
     try:
-        new_model = tf.keras.models.load_model(f'model_with_function_{act_func}' + '.' + save_format, 
+        new_model = tf.keras.models.load_model(f'final_score_model_with_function_{act_func}' + '.' + save_format, 
                                                custom_objects={'custom_accuracy': custom_accuracy}, 
                                                compile=True)
         print("model_with_function loaded with the following metrics:")

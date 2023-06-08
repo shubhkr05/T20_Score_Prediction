@@ -9,9 +9,8 @@ def custom_accuracy(y_true, y_pred):
 save_format = 'tf'
 
 for act_func in ['tanh', 'relu']:
-    _model = tf.keras.models.load_model(f'model_with_function_{act_func}' + '.' + save_format, 
+    _model = tf.keras.models.load_model(f'final_score_model_with_function_{act_func}' + '.' + save_format, 
                                                custom_objects={'custom_accuracy': custom_accuracy}, 
                                                compile=True)
 
-    print(_model.predict([10, 120]).flatten())
-# print(new_model.metrics[1])
+    print(_model.predict([8, 20, 200]).flatten() + [200])
